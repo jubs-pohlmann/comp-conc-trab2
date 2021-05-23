@@ -40,12 +40,12 @@ class LE {
    public void PriorityWrite (int id) {
       this.wantWrite++;
       this.EntraEscritor(id);
-    }
+    } 
 
 	// Entrada para escritores
 	public synchronized void EntraEscritor (int id) {
 	  try { 
-		if ((this.leit > 0) || (this.escr > 0)) {
+		while ((this.leit > 0) || (this.escr > 0)) {
 		   // System.out.println ("le.escritorBloqueado("+id+")");
 		   wait();  //bloqueia pela condicao logica da aplicacao 
 		}
@@ -80,8 +80,7 @@ class Sensor extends Thread {
    //--devolve temperatura no intervalo [25,40]
    private int getTemperature() {
       this.readIndex++;
-      return 35;
-      // return (int) ((Math.random() * 15) + 25);
+      return (int) ((Math.random() * 15) + 25);
    }
 
    public void run(){
@@ -138,7 +137,7 @@ class Atuador extends Thread {
             if(this.alerta == null) this.alerta = "Normal";
             if(nLeituras != 0) avg = soma/nLeituras;
 
-            System.out.println("SENSOR "+ this.id + " Alerta: " + this.alerta + " MÉDIA: " + avg);
+            System.out.println("SENSOR "+ this.id + " Alerta: " + this.alerta + " MÉDIA: " + avg+"°C");
             leitorEscritor.SaiLeitor(this.id);
             
             sleep(2000);
@@ -149,14 +148,14 @@ class Atuador extends Thread {
 }
 
 //--classe do metodo main
-class HelloThread {
+class MonitorTemperature {
    public static void main (String[] args) {
       LE leitorEscritor = new LE();
       Queue<int[]> lastReadings = new ArrayDeque<int[]>(60);
 
       //--recebe e valida os parâmetros passados
       if(args.length < 1){
-         System.out.println("Executar: arquivo <Num. sensores>" + args.length);
+         System.out.println("Executar: arquivo <Num. sensores>");
          return;
       }
 
@@ -174,14 +173,14 @@ class HelloThread {
       }
 
       //--PASSO 4: esperar pelo termino das threads (sem esse passo a main pode terminar antes das threads)
-      for (int i=0; i<nsensores; i++) {
-            try { 
-               sensores[i].join(); 
-               atuadores[i].join(); 
-            } 
-            catch (InterruptedException e) { return; }
-      }
+   //    for (int i=0; i<nsensores; i++) {
+   //          try { 
+   //             sensores[i].join(); 
+   //             atuadores[i].join(); 
+   //          } 
+   //          catch (InterruptedException e) { return; }
+   //    }
 
-      System.out.println("Terminou"); 
-   }
+   //    System.out.println("Terminou"); 
+   // }
 }
