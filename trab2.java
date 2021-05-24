@@ -36,14 +36,21 @@ class LimitedSizeQueue<K> extends ArrayList<K> {
 class LE {
 	private int leit, escr, wantWrite;  
 	
-	// Construtor
+	/**
+    * Inicializa a classe LE
+    */
 	LE() { 
 	   this.leit = 0; //leitores lendo (0 ou mais)
 	   this.escr = 0; //escritor escrevendo (0 ou 1)
 	   this.wantWrite = 0; // Escritores esperando prioridade
 	} 
 	
-	// Entrada para leitores
+	/**
+    * Registra que uma Thread deseja realizar operações de leitura.
+    * caso não haja nenhuma Thread Escritora escrevendo ou querendo escrever
+    * permite que a operação prossiga.
+    * @param id ID da Thread Leitora
+    */
 	public synchronized void EntraLeitor (int id) {
 	  try { 
 		while (this.escr > 0 || this.wantWrite > 0) {
@@ -55,23 +62,34 @@ class LE {
 	  } catch (InterruptedException e) { }
 	}
 	
-	// Saida para leitores
+	/**
+    * Registra que um leitor terminou suas operações e desperta as threads que estavam a espera.
+    * @param id ID da Thread leitora.
+    */
 	public synchronized void SaiLeitor (int id) {
 	   this.leit--; //registra que um leitor saiu
 	   if (this.leit == 0) 
 			notifyAll();
 	}
 	
+   /**
+    * Registra que uma Thread deseja escrever e define a prioridade da leitura.
+    * @param id ID da Thread Escritora
+    */
    public void PriorityWrite (int id) {
       this.wantWrite++;
       this.EntraEscritor(id);
     } 
 
-	// Entrada para escritores
-	public synchronized void EntraEscritor (int id) {
+    /**
+     * Permite as operações de escrita caso não haja outros escritores
+     * ou leitores operando sobre a lista.
+     * @param id ID da Thread Escritora
+     */
+    public synchronized void EntraEscritor (int id) {
 	  try { 
 		while ((this.leit > 0) || (this.escr > 0)) {
-         System.out.println("Escritor "+ id +" Bloqueado");
+         System.out.println("Escritor "+ id +" BLOQUEADO*************");
 		   wait();  //bloqueia pela condicao logica da aplicacao 
 		}
       System.out.println("Escritor "+ id +" prosseguindo");
@@ -79,7 +97,11 @@ class LE {
 	  } catch (InterruptedException e) { }
 	}
 	
-	// Saida para escritores
+	/**
+    * Registra que as operações de escrita foram realizadas e acorda
+    * as Threads adormecidas.
+    * @param id ID da Thread Escritora
+    */
 	public synchronized void SaiEscritor (int id) {
 	   this.escr--; // registra que o escritor saiu
       this.wantWrite--; // registra que o conseguiu a prioridade;
@@ -94,14 +116,22 @@ class Sensor extends Thread {
    private LimitedSizeQueue<int[]> lastReadings;
    private int readIndex = 0;
 
-   //--construtor
+   /**
+    * 
+    * @param id ID da Thread Sensor
+    * @param leitorEscritor Instância controladora das Leituras e Escritas
+    * @param lastReadings Lista das ultimas leituras registradas por todas as Threads Sensores
+    */
    public Sensor(int id, LE leitorEscritor, LimitedSizeQueue<int[]> lastReadings) { 
       this.id = id;
       this.leitorEscritor = leitorEscritor;
       this.lastReadings = lastReadings;
    }
 
-   //--devolve temperatura no intervalo [25,40]
+   /**
+    * 
+    * @return Retorna um numero inteiro aletório entre 25 e 40 
+    */
    private int getTemperature() {
       this.readIndex++;
       return (int) ((Math.random() * 15) + 25);
@@ -131,6 +161,12 @@ class Atuador extends Thread {
    private LimitedSizeQueue<int[]> lastReadings;
    private String alerta; 
 
+   /**
+    * 
+    * @param id ID da Thread Atuadora
+    * @param leitorEscritor Instância controladora das Leituras e Escritas
+    * @param lastReadings Lista das ultimas leituras registradas por todas as Threads Sensores
+    */
    public Atuador(int id, LE leitorEscritor, LimitedSizeQueue<int[]> lastReadings) { 
       this.id = id;
       this.leitorEscritor = leitorEscritor;
