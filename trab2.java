@@ -189,7 +189,7 @@ class Atuador extends Thread {
             this.alerta = null;
             ArrayList<Integer> sensorUltimas = new ArrayList<Integer>();
             leitorEscritor.EntraLeitor(this.id);
-         
+            
             for(int[] t : this.lastReadings){
                if(t[0] != this.id) continue;
                sensorUltimas.add(t[1]);
@@ -213,12 +213,13 @@ class Atuador extends Thread {
    }
 }
 
-//--classe do metodo main
+// Classe do metodo main
 class MonitorTemperature {
    public static void main (String[] args) {
       LE leitorEscritor = new LE();
       LimitedSizeQueue<int[]> lastReadings = new LimitedSizeQueue<int[]>(60);
-      //--recebe e valida os parâmetros passados
+     
+      //Recebe e valida os parâmetros passados
       if(args.length < 1){
          System.out.println("Executar: arquivo <Num. sensores>");
          return;
@@ -226,10 +227,11 @@ class MonitorTemperature {
 
       int nsensores  = Integer.parseInt(args[0]);
 
-      //--reserva espaço para um vetor de threads
+      // Reserva espaço para um vetor de threads
       Thread[] sensores = new Thread[nsensores];
       Thread[] atuadores = new Thread[nsensores];
-      //--PASSO 3: iniciar a thread
+
+      // Iniciar as threads
       for (int i=0; i< nsensores; i++) {
          sensores[i] = new Sensor(i, leitorEscritor, lastReadings);
          sensores[i].start();
