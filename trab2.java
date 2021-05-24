@@ -37,6 +37,7 @@ class LE {
 	private int leit, escr, wantWrite;  
 	
 	/**
+    * 
     * Inicializa a classe LE
     */
 	LE() { 
@@ -46,6 +47,7 @@ class LE {
 	} 
 	
 	/**
+    * 
     * Registra que uma Thread deseja realizar operações de leitura.
     * caso não haja nenhuma Thread Escritora escrevendo ou querendo escrever
     * permite que a operação prossiga.
@@ -63,6 +65,7 @@ class LE {
 	}
 	
 	/**
+    * 
     * Registra que um leitor terminou suas operações e desperta as threads que estavam a espera.
     * @param id ID da Thread leitora.
     */
@@ -73,6 +76,7 @@ class LE {
 	}
 	
    /**
+    * 
     * Registra que uma Thread deseja escrever e define a prioridade da leitura.
     * @param id ID da Thread Escritora
     */
@@ -82,6 +86,7 @@ class LE {
     } 
 
     /**
+     * 
      * Permite as operações de escrita caso não haja outros escritores
      * ou leitores operando sobre a lista.
      * @param id ID da Thread Escritora
@@ -98,6 +103,7 @@ class LE {
 	}
 	
 	/**
+    * 
     * Registra que as operações de escrita foram realizadas e acorda
     * as Threads adormecidas.
     * @param id ID da Thread Escritora
@@ -230,16 +236,5 @@ class MonitorTemperature {
          atuadores[i] = new Atuador(i, leitorEscritor, lastReadings);
          atuadores[i].start();
       }
-
-      //--PASSO 4: esperar pelo termino das threads (sem esse passo a main pode terminar antes das threads)
-   //    for (int i=0; i<nsensores; i++) {
-   //          try { 
-   //             sensores[i].join(); 
-   //             atuadores[i].join(); 
-   //          } 
-   //          catch (InterruptedException e) { return; }
-   //    }
-
-   //    System.out.println("Terminou"); 
    }
 }
