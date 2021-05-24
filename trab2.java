@@ -7,6 +7,32 @@
 
 import java.util.*;
 
+// Classe para FIFO de numero de elementos fixo
+class LimitedSizeQueue<K> extends ArrayList<K> {
+
+   private int maxSize;
+
+   public LimitedSizeQueue(int size){
+       this.maxSize = size;
+   }
+
+   public boolean add(K k){
+       boolean r = super.add(k);
+       if (size() > maxSize){
+           removeRange(0, size() - maxSize); // Caso tente adicionar mais que o limite, exclui os mais antigos
+       }
+       return r;
+   }
+
+   public K getYoungest() {
+       return get(size() - 1);
+   }
+
+   public K getOldest() {
+       return get(0);
+   }
+}
+
 class LE {
 	private int leit, escr, wantWrite;  
 	
@@ -21,11 +47,11 @@ class LE {
 	public synchronized void EntraLeitor (int id) {
 	  try { 
 		while (this.escr > 0 || this.wantWrite > 0) {
-		   // System.out.println ("le.leitorBloqueado("+id+")");
+         System.out.println("Leitor "+ id +" Bloqueado");
 		   wait();  //bloqueia pela condicao logica da aplicacao 
 		}
+      System.out.println("Leitor "+ id +" prosseguindo");
 		this.leit++;  //registra que ha mais um leitor lendo
-		// System.out.println ("le.leitorLendo("+id+")");
 	  } catch (InterruptedException e) { }
 	}
 	
@@ -33,8 +59,7 @@ class LE {
 	public synchronized void SaiLeitor (int id) {
 	   this.leit--; //registra que um leitor saiu
 	   if (this.leit == 0) 
-			 this.notify(); //libera escritor (caso exista escritor bloqueado)
-	   // System.out.println ("le.leitorSaindo("+id+")");
+			notifyAll();
 	}
 	
    public void PriorityWrite (int id) {
@@ -46,32 +71,31 @@ class LE {
 	public synchronized void EntraEscritor (int id) {
 	  try { 
 		while ((this.leit > 0) || (this.escr > 0)) {
-		   // System.out.println ("le.escritorBloqueado("+id+")");
+         System.out.println("Escritor "+ id +" Bloqueado");
 		   wait();  //bloqueia pela condicao logica da aplicacao 
 		}
+      System.out.println("Escritor "+ id +" prosseguindo");
 		this.escr++; //registra que ha um escritor escrevendo
-		// System.out.println ("le.escritorEscrevendo("+id+")");
 	  } catch (InterruptedException e) { }
 	}
 	
 	// Saida para escritores
 	public synchronized void SaiEscritor (int id) {
-	   this.escr--; //registra que o escritor saiu
+	   this.escr--; // registra que o escritor saiu
       this.wantWrite--; // registra que o conseguiu a prioridade;
-	   notifyAll(); //libera leitores e escritores (caso existam leitores ou escritores bloqueados)
-	   // System.out.println ("le.escritorSaindo("+id+")");
+	   notifyAll(); // libera leitores e escritores (caso existam leitores ou escritores bloqueados)
 	}
-  }
+}
 
 //--PASSO 1: criar uma classe com padrão leitores/escritores, com prioridade para escrita 
 class Sensor extends Thread {
    private int id;
    private LE leitorEscritor;
-   private Queue<int[]> lastReadings;
+   private LimitedSizeQueue<int[]> lastReadings;
    private int readIndex = 0;
 
    //--construtor
-   public Sensor(int id, LE leitorEscritor, Queue<int[]> lastReadings) { 
+   public Sensor(int id, LE leitorEscritor, LimitedSizeQueue<int[]> lastReadings) { 
       this.id = id;
       this.leitorEscritor = leitorEscritor;
       this.lastReadings = lastReadings;
@@ -89,7 +113,6 @@ class Sensor extends Thread {
 
          while(true){
             temperature = getTemperature();
-            System.out.println ("Sensor "+this.id+ " registrou temperatura de "+temperature+"°C");
             if(temperature > 30){
                leitorEscritor.PriorityWrite(this.id);
                int[] tripla = {this.id, temperature, this.readIndex};
@@ -105,10 +128,10 @@ class Sensor extends Thread {
 class Atuador extends Thread {
    private int id;
    private LE leitorEscritor;
-   private Queue<int[]> lastReadings;
+   private LimitedSizeQueue<int[]> lastReadings;
    private String alerta; 
 
-   public Atuador(int id, LE leitorEscritor, Queue<int[]> lastReadings) { 
+   public Atuador(int id, LE leitorEscritor, LimitedSizeQueue<int[]> lastReadings) { 
       this.id = id;
       this.leitorEscritor = leitorEscritor;
       this.lastReadings = lastReadings;
@@ -122,22 +145,23 @@ class Atuador extends Thread {
             int soma = 0;
             int acima35 = 0;
             this.alerta = null;
-
+            ArrayList<Integer> sensorUltimas = new ArrayList<Integer>();
             leitorEscritor.EntraLeitor(this.id);
          
             for(int[] t : this.lastReadings){
                if(t[0] != this.id) continue;
+               sensorUltimas.add(t[1]);
                nLeituras++;
                soma += t[1];
                if(t[1] > 35) acima35++;
-               if(t[1] > 35 && nLeituras == 5) this.alerta = "Vermelho";
-               if(this.alerta == null && acima35 >= 5 && nLeituras == 15) this.alerta = "Amarelo";
+               if(t[1] > 35 && nLeituras == 5 && acima35 == 5) this.alerta = "Vermelho";
+               if(this.alerta == null && acima35 >= 5 && nLeituras <= 15) this.alerta = "Amarelo";
             }
 
             if(this.alerta == null) this.alerta = "Normal";
             if(nLeituras != 0) avg = soma/nLeituras;
+            System.out.println("-------- SENSOR " + this.id + " --------\n Alerta: " + this.alerta + "\n MÉDIA: " + avg+"°C\n Ultimas Leituras: " + sensorUltimas.toString()+"\n---------------------------------------\n");
 
-            System.out.println("SENSOR "+ this.id + " Alerta: " + this.alerta + " MÉDIA: " + avg+"°C");
             leitorEscritor.SaiLeitor(this.id);
             
             sleep(2000);
@@ -151,8 +175,7 @@ class Atuador extends Thread {
 class MonitorTemperature {
    public static void main (String[] args) {
       LE leitorEscritor = new LE();
-      Queue<int[]> lastReadings = new ArrayDeque<int[]>(60);
-
+      LimitedSizeQueue<int[]> lastReadings = new LimitedSizeQueue<int[]>(60);
       //--recebe e valida os parâmetros passados
       if(args.length < 1){
          System.out.println("Executar: arquivo <Num. sensores>");
@@ -182,5 +205,5 @@ class MonitorTemperature {
    //    }
 
    //    System.out.println("Terminou"); 
-   // }
+   }
 }
